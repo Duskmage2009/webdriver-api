@@ -1,0 +1,13 @@
+[
+  {
+    "proxyNetworkConfig": {
+      "hostname": "localhost",
+      "port": 80
+    },
+    "proxyCredentials": {
+      "user": "user",
+      "password": "password"
+    }
+  },
+  ~~~ Something went wrong here. JSON file is broken
+]

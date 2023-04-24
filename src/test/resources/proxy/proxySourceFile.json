@@ -1,0 +1,42 @@
+[
+  {
+    "proxyNetworkConfig": {
+      "hostname": "localhost",
+      "port": 80
+    },
+    "proxyCredentials": {
+      "user": "user",
+      "password": "password"
+    }
+  },
+  {
+    "proxyNetworkConfig": {
+      "hostname": "localhost",
+      "port": 80
+    },
+    "proxyCredentials": {
+      "user": "user",
+      "password": "password"
+    }
+  },
+  {
+    "proxyNetworkConfig": {
+      "hostname": "localhost",
+      "port": 80
+    },
+    "proxyCredentials": {
+      "user": "user",
+      "password": "password"
+    }
+  },
+  {
+    "proxyNetworkConfig": {
+      "hostname": "localhost",
+      "port": 80
+    },
+    "proxyCredentials": {
+      "user": "user",
+      "password": "password"
+    }
+  }
+]

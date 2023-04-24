@@ -16,12 +16,15 @@ import java.util.List;
 @Service
 public class ProxySourceServiceFileImpl implements ProxySourceServiceFile {
 
-    @Value("${service.proxy.source-file}")
-    private String proxySourceFile;
+    private final String proxySourceFile;
     private final QueueHandler<ProxyConfigHolderDTO> proxyQueueHandler;
     private final ObjectMapper objectMapper;
 
-    public ProxySourceServiceFileImpl(QueueHandler<ProxyConfigHolderDTO> proxyQueueHandler, ObjectMapper objectMapper) {
+    public ProxySourceServiceFileImpl(
+            @Value("${service.proxy.source-file}") String proxySourceFile,
+            QueueHandler<ProxyConfigHolderDTO> proxyQueueHandler,
+            ObjectMapper objectMapper) {
+        this.proxySourceFile = proxySourceFile;
         this.proxyQueueHandler = proxyQueueHandler;
         this.objectMapper = objectMapper;
     }
