@@ -3,7 +3,7 @@ package executor.api.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import executor.api.model.ProxyConfigHolderDTO;
-import executor.api.service.ProxySourceServiceFile;
+import executor.api.service.ProxySourceService;
 import executor.api.service.QueueHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,13 +14,13 @@ import java.nio.file.Path;
 import java.util.List;
 
 @Service
-public class ProxySourceServiceFileImpl implements ProxySourceServiceFile {
+public class ProxySourceServiceFile implements ProxySourceService {
 
     private final String proxySourceFile;
     private final QueueHandler<ProxyConfigHolderDTO> proxyQueueHandler;
     private final ObjectMapper objectMapper;
 
-    public ProxySourceServiceFileImpl(
+    public ProxySourceServiceFile(
             @Value("${service.proxy.source-file}") String proxySourceFile,
             QueueHandler<ProxyConfigHolderDTO> proxyQueueHandler,
             ObjectMapper objectMapper) {
@@ -30,7 +30,7 @@ public class ProxySourceServiceFileImpl implements ProxySourceServiceFile {
     }
 
     @Override
-    public void preloadProxies() {
+    public void loadProxies() {
         proxyListFromFile().forEach(proxyQueueHandler::add);
     }
 
