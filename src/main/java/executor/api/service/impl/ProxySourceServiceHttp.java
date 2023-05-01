@@ -4,6 +4,7 @@ import executor.api.model.ProxyConfigHolderDTO;
 import executor.api.model.ProxyResponseDTO;
 import executor.api.model.mapper.Mapper;
 import executor.api.service.ProxySourceService;
+import executor.api.service.QueueHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
@@ -18,28 +19,34 @@ import java.util.List;
 public class ProxySourceServiceHttp implements ProxySourceService {
 
     private final String proxySourceUrl;
+    private final Integer queueLimit;
     private final RestTemplateBuilder restTemplateBuilder;
     private final Mapper<ProxyResponseDTO, ProxyConfigHolderDTO> responseToProxyConfigMapper;
-    private final ProxySourceQueueHandler proxySourceQueueHandler;
+    private final QueueHandler<ProxyConfigHolderDTO> proxySourceQueueHandler;
     private final ParameterizedTypeReference<List<ProxyResponseDTO>> typeReference;
 
     public ProxySourceServiceHttp(@Value("${service.proxy.source-url}") String proxySourceUrl,
+                                  @Value("${service.proxy.queue.limit}") Integer queueLimit,
                                   RestTemplateBuilder restTemplateBuilder,
                                   Mapper<ProxyResponseDTO, ProxyConfigHolderDTO> responseToProxyConfigMapper,
-                                  ProxySourceQueueHandler proxySourceQueueHandler) {
+                                  QueueHandler<ProxyConfigHolderDTO> proxySourceQueueHandler,
+                                  ParameterizedTypeReference<List<ProxyResponseDTO>> typeReference) {
         this.proxySourceUrl = proxySourceUrl;
+        this.queueLimit = queueLimit;
         this.proxySourceQueueHandler = proxySourceQueueHandler;
         this.restTemplateBuilder = restTemplateBuilder;
         this.responseToProxyConfigMapper = responseToProxyConfigMapper;
-        this.typeReference = new ParameterizedTypeReference<>() {};
+        this.typeReference = typeReference;
     }
 
     @Override
     @Scheduled(fixedRateString = "${service.proxy.schedule.url}")
     public void loadProxies() {
-        proxyListFromUrl().stream()
-                .map(responseToProxyConfigMapper::map)
-                .forEach(proxySourceQueueHandler::add);
+        if (proxySourceQueueHandler.queueSize() < queueLimit) {
+            proxyListFromUrl().stream()
+                    .map(responseToProxyConfigMapper::map)
+                    .forEach(proxySourceQueueHandler::add);
+        }
     }
 
     private List<ProxyResponseDTO> proxyListFromUrl() {
