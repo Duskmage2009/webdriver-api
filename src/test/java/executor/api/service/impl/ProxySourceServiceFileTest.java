@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import executor.api.captor.ResultCaptor;
 import executor.api.model.ProxyConfigHolderDTO;
 import executor.api.model.builder.ProxyConfigHolderDTOBuilderImpl;
+import executor.api.service.ProxyValidationService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,8 @@ import static org.mockito.Mockito.*;
 public class ProxySourceServiceFileTest {
 
     @Mock
+    private ProxyValidationService proxyValidationService;
+    @Mock
     private ProxySourceQueueHandler proxySourceQueueHandler;
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -32,7 +35,8 @@ public class ProxySourceServiceFileTest {
     @BeforeEach
     public void setup() {
         String proxySourceFile = "src/test/resources/proxy/proxySourceFile.json";
-        proxySourceServiceFile = new ProxySourceServiceFile(proxySourceFile, proxySourceQueueHandler, objectMapper);
+        proxySourceServiceFile =
+                new ProxySourceServiceFile(proxySourceFile, proxyValidationService, proxySourceQueueHandler, objectMapper);
     }
 
     @Test
@@ -43,6 +47,7 @@ public class ProxySourceServiceFileTest {
 
         doReturn(proxyList)
                 .when(objectMapper).readValue(anyString(), ArgumentMatchers.<TypeReference<List<ProxyConfigHolderDTO>>>any());
+        when(proxyValidationService.validateProxy(any())).thenReturn(true);
         proxySourceServiceFile.loadProxies();
 
         verify(proxySourceQueueHandler, times(proxyAmount)).add(proxy);
@@ -50,9 +55,33 @@ public class ProxySourceServiceFileTest {
 
     @Test
     public void shouldReadFileWithFourProxiesAndAddToQueueHandler() {
+        when(proxyValidationService.validateProxy(any())).thenReturn(true);
         proxySourceServiceFile.loadProxies();
 
         verify(proxySourceQueueHandler, times(4)).add(any(ProxyConfigHolderDTO.class));
+    }
+
+    @Test
+    public void shouldReadAndSkipFourInvalidProxies() {
+        when(proxyValidationService.validateProxy(any())).thenReturn(false);
+        proxySourceServiceFile.loadProxies();
+
+        verify(proxyValidationService, times(4)).validateProxy(any());
+        verifyNoInteractions(proxySourceQueueHandler);
+    }
+
+    @Test
+    public void shouldAddOnlyValidProxies() {
+        when(proxyValidationService.validateProxy(any()))
+                .thenReturn(false)
+                .thenReturn(false)
+                .thenReturn(true)
+                .thenReturn(true);
+
+        proxySourceServiceFile.loadProxies();
+
+        verify(proxyValidationService, times(4)).validateProxy(any());
+        verify(proxySourceQueueHandler, times(2)).add(any());
     }
 
     @Test
@@ -75,7 +104,7 @@ public class ProxySourceServiceFileTest {
     public void shouldThrowRuntimeExceptionWhenFileNotExists() {
         String fileNotExists = "notExists";
         proxySourceServiceFile =
-                new ProxySourceServiceFile(fileNotExists, proxySourceQueueHandler, objectMapper);
+                new ProxySourceServiceFile(fileNotExists, proxyValidationService, proxySourceQueueHandler, objectMapper);
 
         Assertions.assertThrows(RuntimeException.class, () -> proxySourceServiceFile.loadProxies());
     }
@@ -84,7 +113,7 @@ public class ProxySourceServiceFileTest {
     public void shouldThrowRuntimeExceptionWhenFileIsEmpty() {
         String emptyProxySource = "src/test/resources/proxy/emptyProxy.json";
         proxySourceServiceFile =
-                new ProxySourceServiceFile(emptyProxySource, proxySourceQueueHandler, objectMapper);
+                new ProxySourceServiceFile(emptyProxySource, proxyValidationService, proxySourceQueueHandler, objectMapper);
 
         Assertions.assertThrows(RuntimeException.class, () -> proxySourceServiceFile.loadProxies());
     }
@@ -93,7 +122,7 @@ public class ProxySourceServiceFileTest {
     public void shouldThrowRuntimeExceptionWhenJsonFileIsBroken() {
         String brokenProxySource = "src/test/resources/proxy/brokenProxy.json";
         proxySourceServiceFile =
-                new ProxySourceServiceFile(brokenProxySource, proxySourceQueueHandler, objectMapper);
+                new ProxySourceServiceFile(brokenProxySource, proxyValidationService, proxySourceQueueHandler, objectMapper);
 
         Assertions.assertThrows(RuntimeException.class, () -> proxySourceServiceFile.loadProxies());
     }

@@ -4,6 +4,7 @@ import executor.api.model.ProxyConfigHolderDTO;
 import executor.api.model.ProxyResponseDTO;
 import executor.api.model.builder.ProxyConfigHolderDTOBuilderImpl;
 import executor.api.model.mapper.Mapper;
+import executor.api.service.ProxyValidationService;
 import executor.api.service.QueueHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,8 @@ public class ProxySourceServiceHttpTest {
     @Mock
     private Mapper<ProxyResponseDTO, ProxyConfigHolderDTO> proxyConfigHolderDTOMapper;
     @Mock
+    private ProxyValidationService proxyValidationService;
+    @Mock
     private QueueHandler<ProxyConfigHolderDTO> proxyQueueHandler;
     @Mock
     private ParameterizedTypeReference<List<ProxyResponseDTO>> parameterizedTypeReference;
@@ -50,6 +53,7 @@ public class ProxySourceServiceHttpTest {
                 queueLimit,
                 restTemplateBuilder,
                 proxyConfigHolderDTOMapper,
+                proxyValidationService,
                 proxyQueueHandler,
                 parameterizedTypeReference
         );
@@ -68,21 +72,24 @@ public class ProxySourceServiceHttpTest {
         int quantity = 3;
 
         whenRestTemplateCallsExchange().thenReturn(ResponseEntity.ok(listWithProxyQuantity(quantity)));
+        when(proxyValidationService.validateProxy(any())).thenReturn(true);
         proxySourceServiceHttp.loadProxies();
 
         verify(proxyQueueHandler, times(quantity)).add(any());
     }
 
     @Test
-    public void shouldMapAndAddCorrectProxiesTenTimes() {
+    public void shouldMapValidateAddCorrectProxiesTenTimes() {
         int quantity = 10;
         ProxyConfigHolderDTO proxyConfigHolder =
                 new ProxyConfigHolderDTOBuilderImpl().withCredentials("host", "port").build();
 
         whenRestTemplateCallsExchange().thenReturn(ResponseEntity.ok(listWithProxyQuantity(quantity)));
         when(proxyConfigHolderDTOMapper.map(proxyResponse)).thenReturn(proxyConfigHolder);
+        when(proxyValidationService.validateProxy(proxyConfigHolder)).thenReturn(true);
         proxySourceServiceHttp.loadProxies();
 
+        verify(proxyValidationService, times(quantity)).validateProxy(proxyConfigHolder);
         verify(proxyConfigHolderDTOMapper, times(quantity)).map(proxyResponse);
         verify(proxyQueueHandler, times(quantity)).add(proxyConfigHolder);
     }
@@ -95,6 +102,36 @@ public class ProxySourceServiceHttpTest {
 
         verify(proxyQueueHandler).queueSize();
         verifyNoMoreInteractions(proxyQueueHandler, proxyConfigHolderDTOMapper, restTemplateBuilder, restTemplate);
+    }
+
+    @Test
+    public void shouldAddOnlyValidProxies() {
+        int proxyQuantity = 4;
+        int expectedValidProxy = 2;
+
+        whenRestTemplateCallsExchange().thenReturn(ResponseEntity.ok(listWithProxyQuantity(proxyQuantity)));
+        when(proxyValidationService.validateProxy(any()))
+                .thenReturn(true)
+                .thenReturn(false)
+                .thenReturn(false)
+                .thenReturn(true);
+        proxySourceServiceHttp.loadProxies();
+
+        verify(proxyValidationService, times(proxyQuantity)).validateProxy(any());
+        verify(proxyQueueHandler, times(expectedValidProxy)).add(any());
+    }
+
+    @Test
+    public void shouldValidateAndSkipInvalidProxies() {
+        int quantity = 10;
+
+        whenRestTemplateCallsExchange().thenReturn(ResponseEntity.ok(listWithProxyQuantity(quantity)));
+        when(proxyValidationService.validateProxy(any())).thenReturn(false);
+        proxySourceServiceHttp.loadProxies();
+
+        verify(proxyQueueHandler).queueSize();
+        verify(proxyValidationService, times(quantity)).validateProxy(any());
+        verifyNoMoreInteractions(proxyQueueHandler);
     }
 
     @Test
