@@ -1,8 +1,11 @@
 package executor.api.model;
 
+import jakarta.validation.Valid;
+
 import java.util.Objects;
 
 public class ProxyConfigHolderDTO {
+    @Valid
     private ProxyNetworkConfigDTO proxyNetworkConfig;
     private ProxyCredentialsDTO proxyCredentialsDTO;
 

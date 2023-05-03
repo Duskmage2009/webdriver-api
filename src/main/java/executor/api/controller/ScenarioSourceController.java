@@ -2,6 +2,7 @@ package executor.api.controller;
 
 import executor.api.model.ScenarioDTO;
 import executor.api.service.ScenarioSourceQueueHandlerImpl;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class ScenarioSourceController {
     }
 
     @PostMapping
-    public ResponseEntity<String> offerScenario(@RequestBody ScenarioDTO scenarioDTO){
+    public ResponseEntity<String> offerScenario(@Valid @RequestBody ScenarioDTO scenarioDTO){
         scenarioSourceQueueHandler.offer(scenarioDTO);
        return new ResponseEntity<String>("Scenario is successfully created", HttpStatus.CREATED);
     }

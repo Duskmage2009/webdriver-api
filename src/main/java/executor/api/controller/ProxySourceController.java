@@ -2,6 +2,7 @@ package executor.api.controller;
 
 import executor.api.model.ProxyConfigHolderDTO;
 import executor.api.service.impl.ProxySourceQueueHandler;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +22,9 @@ public class ProxySourceController {
     }
 
     @PostMapping
-    public ResponseEntity<String> addProxy(@RequestBody ProxyConfigHolderDTO proxyConfigHolderDTO) {
+    public ResponseEntity<String> addProxy(@Valid @RequestBody ProxyConfigHolderDTO proxyConfigHolderDTO) {
         proxySourceQueueHandler.add(proxyConfigHolderDTO);
-        return new ResponseEntity<>("Added successfully",HttpStatus.CREATED);
+        return new ResponseEntity<>("Proxy added successfully",HttpStatus.CREATED);
     }
 
     @GetMapping

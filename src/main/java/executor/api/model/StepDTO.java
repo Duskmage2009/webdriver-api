@@ -1,10 +1,14 @@
 package executor.api.model;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.Objects;
 
 public class StepDTO {
 
+	@NotBlank(message = "action field mustn't not be empty")
 	private String action;
+	@NotBlank(message = "value field mustn't be empty")
 	private String value;
 
 	public StepDTO() {}

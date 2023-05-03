@@ -1,9 +1,18 @@
 package executor.api.model;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.util.Objects;
 
 public class ProxyNetworkConfigDTO {
+    @NotBlank(message = "hostname mustn't be empty field")
     private String hostname;
+    @NotNull(message = "port mustn't be empty field")
+    @Min(value = 0, message ="port must be more than 0")
+    @Max(value = 65535,message = "port must be less than 65535")
     private Integer port;
 
     public ProxyNetworkConfigDTO() {

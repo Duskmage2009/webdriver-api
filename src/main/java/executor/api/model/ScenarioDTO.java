@@ -1,11 +1,18 @@
 package executor.api.model;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 import java.util.List;
 import java.util.Objects;
 
 public class ScenarioDTO {
     private String name;
+    @NotBlank(message = "site is required ,this mustn't be empty field")
     private String site;
+    @Valid
+    @Size(min = 1 ,message = "need put at least one step")
     private List<StepDTO> steps;
 
     public ScenarioDTO() {
